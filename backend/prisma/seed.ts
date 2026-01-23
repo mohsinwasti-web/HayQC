@@ -1,8 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const hashPin = (pin: string): string => Buffer.from(pin).toString("base64");
+const hashPin = async (pin: string): Promise<string> => {
+  return bcrypt.hash(pin, 10);
+};
 
 async function main() {
   console.log("Seeding database...");
@@ -35,7 +38,7 @@ async function main() {
       companyId: demoCompany.id,
       name: "Admin Supervisor",
       email: "supervisor@demo.com",
-      pinHash: hashPin("0000"),
+      pinHash: await hashPin("0000"),
       role: "SUPERVISOR",
     },
   });
@@ -45,7 +48,7 @@ async function main() {
       companyId: demoCompany.id,
       name: "Demo Inspector",
       email: "inspector@demo.com",
-      pinHash: hashPin("1234"),
+      pinHash: await hashPin("1234"),
       role: "INSPECTOR",
     },
   });
@@ -55,7 +58,7 @@ async function main() {
       companyId: demoCompany.id,
       name: "Demo Customer",
       email: "customer@demo.com",
-      pinHash: hashPin("2222"),
+      pinHash: await hashPin("2222"),
       role: "CUSTOMER",
     },
   });
@@ -65,7 +68,7 @@ async function main() {
       companyId: demoCompany.id,
       name: "Demo Supplier",
       email: "supplier@demo.com",
-      pinHash: hashPin("3333"),
+      pinHash: await hashPin("3333"),
       role: "SUPPLIER",
     },
   });
@@ -285,7 +288,7 @@ async function main() {
       companyId: otherCompany.id,
       name: "Bilal Hassan",
       email: "bilal@gulfagri.ae",
-      pinHash: hashPin("5678"),
+      pinHash: await hashPin("5678"),
       role: "SUPERVISOR",
     },
   });
@@ -295,7 +298,7 @@ async function main() {
       companyId: otherCompany.id,
       name: "Ahmed Malik",
       email: "ahmed@gulfagri.ae",
-      pinHash: hashPin("4321"),
+      pinHash: await hashPin("4321"),
       role: "INSPECTOR",
     },
   });
