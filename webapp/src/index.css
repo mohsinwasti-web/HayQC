@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AL Dayer QC - Industrial Light Theme for Outdoor Field Work */
+
+@layer base {
+  :root {
+    /* Light theme optimized for outdoor visibility */
+    --background: 0 0% 98%;
+    --foreground: 150 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 25% 15%;
+
+    /* Primary: Deep agriculture green */
+    --primary: 150 45% 25%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 10% 90%;
+    --secondary-foreground: 150 25% 15%;
+
+    --muted: 45 10% 92%;
+    --muted-foreground: 150 10% 40%;
+
+    /* Accent: Warm amber/orange for warnings and actions */
+    --accent: 35 95% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Clear red for rejections */
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success: Bright green for accepts */
+    --success: 145 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning: Amber for attention */
+    --warning: 40 95% 50%;
+    --warning-foreground: 0 0% 15%;
+
+    --border: 150 10% 85%;
+    --input: 150 10% 85%;
+    --ring: 150 45% 25%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 150 25% 20%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 35 95% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 20% 30%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 150 20% 30%;
+    --sidebar-ring: 35 95% 55%;
+
+    /* Chart colors */
+    --chart-1: 150 45% 35%;
+    --chart-2: 35 95% 50%;
+    --chart-3: 0 75% 50%;
+    --chart-4: 200 70% 50%;
+    --chart-5: 280 60% 55%;
+  }
+
+  .dark {
+    /* Keep light theme for field work - dark mode not suitable for outdoor use */
+    --background: 0 0% 98%;
+    --foreground: 150 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 25% 15%;
+
+    --primary: 150 45% 25%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 10% 90%;
+    --secondary-foreground: 150 25% 15%;
+
+    --muted: 45 10% 92%;
+    --muted-foreground: 150 10% 40%;
+
+    --accent: 35 95% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 40 95% 50%;
+    --warning-foreground: 0 0% 15%;
+
+    --border: 150 10% 85%;
+    --input: 150 10% 85%;
+    --ring: 150 45% 25%;
+
+    --sidebar-background: 150 25% 20%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 35 95% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 20% 30%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 150 20% 30%;
+    --sidebar-ring: 35 95% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  /* Large touch targets for field use */
+  button,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* High contrast inputs for outdoor visibility */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+@layer components {
+  /* QC Decision buttons */
+  .btn-accept {
+    @apply bg-success text-success-foreground hover:bg-success/90 font-semibold text-lg py-4 px-6 rounded-xl shadow-md active:scale-95 transition-transform;
+  }
+
+  .btn-reject {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold text-lg py-4 px-6 rounded-xl shadow-md active:scale-95 transition-transform;
+  }
+
+  /* Toggle button group */
+  .toggle-btn {
+    @apply flex-1 py-3 px-4 text-center font-medium rounded-lg border-2 transition-all duration-150;
+    @apply border-border bg-background text-foreground;
+  }
+
+  .toggle-btn.active {
+    @apply border-primary bg-primary text-primary-foreground shadow-md;
+  }
+
+  .toggle-btn:active {
+    @apply scale-95;
+  }
+
+  /* Status badges */
+  .badge-open {
+    @apply bg-blue-100 text-blue-800 border border-blue-200;
+  }
+
+  .badge-progress {
+    @apply bg-amber-100 text-amber-800 border border-amber-200;
+  }
+
+  .badge-completed {
+    @apply bg-green-100 text-green-800 border border-green-200;
+  }
+
+  /* Card shadows for depth */
+  .card-elevated {
+    @apply bg-card rounded-xl shadow-md border border-border/50;
+  }
+
+  /* Number input styling for fast entry */
+  .input-large {
+    @apply text-2xl font-semibold text-center py-4 rounded-xl border-2 border-input focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+
+  /* Safe area padding for mobile devices */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+@layer utilities {
+  /* High contrast text for outdoor visibility */
+  .text-high-contrast {
+    @apply text-foreground font-medium;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  }
+
+  /* Bilingual text styling */
+  .text-urdu {
+    font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', serif;
+    direction: rtl;
+  }
+
+  /* Success/Warning/Danger colors */
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  .text-success {
+    color: hsl(var(--success));
+  }
+  .text-success-foreground {
+    color: hsl(var(--success-foreground));
+  }
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+  .text-warning-foreground {
+    color: hsl(var(--warning-foreground));
+  }
+}

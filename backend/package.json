@@ -1,0 +1,37 @@
+{
+  "name": "backend",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "studio": "cloud-studio --port 3001 --hostname 0.0.0.0",
+    "db:push": "bunx prisma db push",
+    "db:generate": "bunx prisma generate",
+    "db:seed": "bunx prisma db seed",
+    "db:studio": "bunx prisma studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@prisma/client": "5.20.0",
+    "@types/bun": "latest",
+    "prisma": "5.20.0",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.12.0",
+    "@hono/zod-validator": "^0.7.6",
+    "@types/bcryptjs": "^3.0.0",
+    "@vibecodeapp/backend-sdk": "^1.0.1",
+    "@vibecodeapp/cloud-studio": "^0.2.3",
+    "@vibecodeapp/proxy": "^2.0.3",
+    "bcryptjs": "^3.0.3",
+    "hono": "4.6.0",
+    "jose": "^6.1.3",
+    "zod": "4.1.11"
+  }
+}

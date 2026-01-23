@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  address      String?
+  contactEmail String?
+  contactPhone String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users          User[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("companies")
+}
+
+// Unified User model for all roles: INSPECTOR, SUPERVISOR, CUSTOMER, SUPPLIER
+model User {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  email     String   @unique
+  pinHash   String
+  role      String   @default("INSPECTOR") // INSPECTOR, SUPERVISOR, CUSTOMER, SUPPLIER
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company       Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignments   InspectorAssignment[]
+  bales         Bale[]
+  poAssignments POUserAssignment[]
+  poNotes       PONote[]
+
+  @@map("users")
+}
+
+// Links Customer/Supplier users to specific POs they can view
+model POUserAssignment {
+  id        String   @id @default(cuid())
+  poId      String
+  userId    String
+  createdAt DateTime @default(now())
+
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([poId, userId])
+  @@map("po_user_assignments")
+}
+
+// Notes that Customer/Supplier can add to their assigned POs
+model PONote {
+  id        String   @id @default(cuid())
+  poId      String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("po_notes")
+}
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  companyId     String
+  poNumber      String
+  customerName  String
+  product       String
+  contractQtyMt Float
+  poDate        DateTime
+  paymentTerms  String?
+  pricePerMt    Float?
+  status        String   @default("OPEN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company         Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shipments       Shipment[]
+  bales           Bale[]
+  userAssignments POUserAssignment[]
+  notes           PONote[]
+
+  @@unique([companyId, poNumber])
+  @@map("purchase_orders")
+}
+
+model Shipment {
+  id           String   @id @default(cuid())
+  poId         String
+  shipmentCode String
+  supplierName String
+  shipmentDate DateTime
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  containers    Container[]
+  bales         Bale[]
+
+  @@unique([poId, shipmentCode])
+  @@map("shipments")
+}
+
+model Container {
+  id                String   @id @default(cuid())
+  shipmentId        String
+  containerCode     String
+  containerNumber   String
+  itemType          String
+  balePress         String
+  baleSize          String
+  avgExpectedWeight Float
+  status            String   @default("PENDING")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  shipment    Shipment              @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  assignments InspectorAssignment[]
+  bales       Bale[]
+
+  @@unique([shipmentId, containerCode])
+  @@map("containers")
+}
+
+model InspectorAssignment {
+  id          String   @id @default(cuid())
+  containerId String
+  inspectorId String
+  rangeStart  Int
+  rangeEnd    Int
+  createdAt   DateTime @default(now())
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  inspector User      @relation(fields: [inspectorId], references: [id], onDelete: Cascade)
+
+  @@map("inspector_assignments")
+}
+
+model Bale {
+  id            String   @id @default(cuid())
+  poId          String
+  shipmentId    String
+  containerId   String
+  inspectorId   String
+  baleNumber    Int
+  baleIdDisplay String
+  weightKg      Float
+  moisturePct   Float?
+  color         String
+  stems         String
+  wetness       String
+  contamination Boolean  @default(false)
+  mixedMaterial Boolean  @default(false)
+  mold          Boolean  @default(false)
+  grade         String
+  decision      String
+  rejectReason  String?
+  photo1Url     String?
+  photo2Url     String?
+  notes         String?
+  syncStatus    String   @default("SYNCED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  shipment      Shipment      @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  container     Container     @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  inspector     User          @relation(fields: [inspectorId], references: [id], onDelete: Cascade)
+
+  @@unique([containerId, baleNumber])
+  @@map("bales")
+}
