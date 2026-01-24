@@ -1,0 +1,5 @@
+[phases.build]
+cmds = ["echo 'Using Dockerfile instead'"]
+
+[start]
+cmd = "bun run src/index.ts"
