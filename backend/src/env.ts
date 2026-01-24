@@ -7,14 +7,17 @@ import { z } from "zod";
 const envSchema = z.object({
   // Server Configuration
   PORT: z.string().optional().default("3000"),
-  NODE_ENV: z.string().optional(),
+  NODE_ENV: z.enum(["development", "production", "test"]).optional().default("development"),
   BACKEND_URL: z.string().url().optional(), // Set via the Vibecode environment at run-time
 
-  // Auth Configuration
-  AUTH_SECRET: z.string().optional(), // JWT signing secret - required for production
+  // Auth Configuration - REQUIRED
+  AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
 
-  // Database
-  DATABASE_URL: z.string().default("file:./dev.db"),
+  // Database - REQUIRED
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+
+  // Error Tracking (optional - only needed for production)
+  SENTRY_DSN: z.string().url().optional(),
 });
 
 /**
@@ -47,14 +50,3 @@ export const env = validateEnv();
  * Type of the validated environment variables
  */
 export type Env = z.infer<typeof envSchema>;
-
-/**
- * Extend process.env with our environment variables
- */
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    // eslint-disable-next-line import/namespace
-    interface ProcessEnv extends z.infer<typeof envSchema> {}
-  }
-}

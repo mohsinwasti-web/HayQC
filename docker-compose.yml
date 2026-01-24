@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hayqc-db
+    environment:
+      POSTGRES_USER: hayqc
+      POSTGRES_PASSWORD: hayqc_dev_password
+      POSTGRES_DB: hayqc
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hayqc -d hayqc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: hayqc-backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://hayqc:hayqc_dev_password@db:5432/hayqc
+      AUTH_SECRET: dev-secret-minimum-32-characters-long!!
+      NODE_ENV: development
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  webapp:
+    build:
+      context: ./webapp
+      args:
+        VITE_BACKEND_URL: http://localhost:3000
+    container_name: hayqc-webapp
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

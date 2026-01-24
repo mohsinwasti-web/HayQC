@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+*.log
+
+# Environment files (should be set via Docker/platform)
+.env
+.env.local
+.env.*.local
+
+# Development files
+*.md
+.git
+.gitignore
+.vscode
+.idea
+
+# Database files (SQLite dev database)
+*.db
+*.db-journal
+prisma/migrations
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__
+coverage
