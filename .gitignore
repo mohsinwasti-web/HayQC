@@ -26,3 +26,15 @@ npm-debug.log*
 
 # Checkpoints (large files)
 checkpoints/
+
+# Package manager lockfiles (use bun.lockb only)
+package-lock.json
+
+# SQLite database files
+*.db
+
+# Sensitive files
+cookies.txt
+
+# Null device file (Windows artifact)
+nul

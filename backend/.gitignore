@@ -38,3 +38,9 @@ server.log
 
 # Uploaded files
 uploads/
+
+# Package manager lockfiles (use bun.lockb only)
+package-lock.json
+
+# SQLite database files
+prisma/*.db

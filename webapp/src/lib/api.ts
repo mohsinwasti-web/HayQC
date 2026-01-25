@@ -12,40 +12,19 @@ interface ApiResponse<T> {
   data: T;
 }
 
-// Helper to get auth token from localStorage
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('hayqc_auth');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.token ?? null;
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
-}
-
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  // Build headers with optional Bearer token
+  // Build headers - auth is handled via HttpOnly cookies
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  // Add Authorization header if token exists
-  const token = getAuthToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const config: RequestInit = {
     ...options,
     headers,
-    credentials: "include",
+    credentials: "include", // Required for cookie-based auth
   };
 
   const response = await fetch(url, config);
@@ -80,21 +59,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  // Build headers with optional Bearer token
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
-  };
-
-  // Add Authorization header if token exists
-  const token = getAuthToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const config: RequestInit = {
     ...options,
-    headers,
-    credentials: "include",
+    headers: options.headers,
+    credentials: "include", // Required for cookie-based auth
   };
   return fetch(url, config);
 }
@@ -152,7 +120,6 @@ export const api = {
     create: (data: unknown) => api.post('/api/users', data),
     update: (id: string, data: unknown) => api.put(`/api/users/${id}`, data),
     delete: (id: string) => api.delete(`/api/users/${id}`),
-    getByEmail: (email: string) => api.get(`/api/users/by-email/${encodeURIComponent(email)}`),
   },
 
   // ==================== INSPECTORS (Legacy - redirects to users) ====================
@@ -166,8 +133,9 @@ export const api = {
 
   // ==================== AUTH ====================
   auth: {
-    login: (companyId: string, userId: string, pin: string) =>
-      api.post('/api/auth/login', { companyId, userId, pin }),
+    login: (companyId: string, email: string, pin: string) =>
+      api.post('/api/auth/login', { companyId, email, pin }),
+    me: () => api.get('/api/auth/me'),
     loginUsers: (companyId: string, role?: string) => {
       const params = new URLSearchParams();
       params.append('companyId', companyId);

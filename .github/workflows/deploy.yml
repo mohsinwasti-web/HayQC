@@ -149,10 +149,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Update schema for PostgreSQL
-        run: |
-          sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
-
       - name: Run migrations
         run: bunx prisma db push --skip-generate
         env:

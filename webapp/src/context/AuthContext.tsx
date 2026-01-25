@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { UserRole, Company } from '@/types/qc';
+import { api } from '@/lib/api';
 
 // Auth state shape matches API login response
 interface AuthUser {
@@ -15,7 +16,6 @@ interface AuthUser {
 interface AuthState {
   user: AuthUser;
   company: Company;
-  token?: string; // JWT token for backup auth
 }
 
 interface AuthContextType {
@@ -30,11 +30,11 @@ interface AuthContextType {
   companyId: string | null;
   userId: string | null;
   role: UserRole | null;
-  token: string | null;
 
   // Auth actions
   setAuth: (auth: AuthState) => void;
   logout: () => void;
+  refreshSession: () => Promise<void>;
 
   // RBAC permission helpers
   canCreate: boolean;
@@ -49,49 +49,47 @@ interface AuthContextType {
   isSupplier: boolean;
 }
 
-const AUTH_STORAGE_KEY = 'hayqc_auth';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuthState] = useState<AuthState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load initial auth state from localStorage
-  useEffect(() => {
+  // Restore session from cookie via /api/auth/me
+  const refreshSession = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as AuthState;
-        // Validate stored auth has required fields
-        if (parsed.user?.id && parsed.company?.id) {
-          setAuthState(parsed);
-        } else {
-          localStorage.removeItem(AUTH_STORAGE_KEY);
-        }
+      const data = await api.auth.me() as AuthState;
+      if (data?.user?.id && data?.company?.id) {
+        setAuthState(data);
+      } else {
+        setAuthState(null);
       }
-    } catch (e) {
-      console.error('Failed to load auth state:', e);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      // Not authenticated or session expired
+      setAuthState(null);
     }
   }, []);
 
-  // Set auth and persist to localStorage
+  // Load initial auth state from cookie on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await refreshSession();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initAuth();
+  }, [refreshSession]);
+
+  // Set auth (called after successful login)
   const setAuth = useCallback((newAuth: AuthState) => {
     setAuthState(newAuth);
-    try {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newAuth));
-    } catch (e) {
-      console.error('Failed to persist auth state:', e);
-    }
   }, []);
 
-  // Clear auth state and localStorage, call backend logout
+  // Clear auth state and call backend logout
   const logout = useCallback(async () => {
     setAuthState(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
     // Clear the cookie on the backend
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
@@ -111,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const companyId = user?.companyId ?? null;
   const userId = user?.id ?? null;
   const role = user?.role ?? null;
-  const token = auth?.token ?? null;
 
   // Role checks
   const isSupervisor = role === 'SUPERVISOR';
@@ -151,9 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     companyId,
     userId,
     role,
-    token,
     setAuth,
     logout,
+    refreshSession,
     canCreate,
     canEdit,
     canDelete,

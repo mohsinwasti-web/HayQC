@@ -66,13 +66,20 @@ export default function Login() {
     }
 
     try {
+      // Get the selected user's email for login
+      const selectedUser = companyUsers.find(u => u.id === selectedUserId);
+      if (!selectedUser) {
+        setError('User not found');
+        return;
+      }
+
       const result = await loginMutation.mutateAsync({
         companyId: selectedCompanyId,
-        userId: selectedUserId,
+        email: selectedUser.email,
         pin,
       });
 
-      // Set auth state (persists to localStorage)
+      // Set auth state (cookie is set by backend)
       setAuth(result);
 
       // Navigate based on role

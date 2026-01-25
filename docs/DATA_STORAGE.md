@@ -2,19 +2,20 @@
 
 This document explains how HayQC stores and manages data.
 
-## Development Environment
+## Database
 
-### SQLite Database
+HayQC uses **PostgreSQL** as the only supported database for both development and production.
 
-HayQC uses **SQLite** for development and demo purposes. The database file is located at:
+### Configuration
 
+Database connection is configured via `DATABASE_URL` in `.env`:
 ```
-backend/prisma/dev.db
+DATABASE_URL="postgresql://user:password@localhost:5432/hayqc"
 ```
 
-Configured via `DATABASE_URL` in `.env`:
-```
-DATABASE_URL="file:./dev.db"
+For local development with Docker Compose:
+```bash
+docker-compose up -d postgres
 ```
 
 ### Prisma ORM
@@ -28,6 +29,9 @@ bunx prisma db push
 # Generate Prisma Client
 bunx prisma generate
 
+# Run migrations (production)
+bunx prisma migrate deploy
+
 # Reset and seed database
 bunx prisma migrate reset
 
@@ -35,45 +39,12 @@ bunx prisma migrate reset
 bunx prisma db seed
 ```
 
-## Vibecode Deployment
-
-### Filesystem Considerations
-
-On Vibecode, the SQLite file lives on the **container filesystem**. Important notes:
-
-- Data persists across server restarts within the same session
-- Container rebuilds may reset the database
-- For persistent demo data, the seed script recreates all test accounts
-
 ### Automatic Setup
 
 The backend start script automatically:
 1. Runs `prisma generate` if schema exists
 2. Runs `prisma db push` to ensure schema is applied
 3. Starts the Hono server
-
-## Production Recommendation
-
-For production deployments, **PostgreSQL** is strongly recommended:
-
-### Why Postgres?
-
-1. **Concurrent Access**: SQLite has write locking limitations
-2. **Scalability**: Postgres handles high traffic better
-3. **Durability**: Managed database services provide backups
-4. **Features**: Full-text search, JSON operations, more data types
-
-### Migration Path
-
-1. Update `DATABASE_URL` to Postgres connection string
-2. Update `prisma/schema.prisma` provider from `sqlite` to `postgresql`
-3. Run `bunx prisma migrate deploy`
-4. Re-seed if needed
-
-Example Postgres URL:
-```
-DATABASE_URL="postgresql://user:password@host:5432/hayqc?schema=public"
-```
 
 ## Data Model Overview
 
@@ -114,7 +85,7 @@ Company
 
 All data is scoped by `companyId`. The backend enforces this at the API level:
 
-- JWT token contains `companyId`
+- Session cookie contains `companyId`
 - All queries filter by authenticated user's company
 - No cross-company data access is possible
 
@@ -123,8 +94,8 @@ All data is scoped by `companyId`. The backend enforces this at the API level:
 The frontend does **not** permanently store business data. It uses:
 
 ### Authentication
-- **HttpOnly Cookie**: `qc_auth` JWT token (primary)
-- **localStorage**: `hayqc_auth` backup for session state
+- **HttpOnly Cookie**: `qc_auth` session token (server-managed)
+- Session restored via `GET /api/auth/me` on page load
 
 ### React Query Cache
 - In-memory cache for API responses
@@ -156,7 +127,7 @@ After seeding (`bunx prisma db seed`):
 
 ## Security Notes
 
-1. **PIN Hashing**: PINs are base64 encoded (demo only). Production should use bcrypt.
-2. **JWT Secret**: Uses `AUTH_SECRET` env var. Must be strong in production.
+1. **PIN Hashing**: PINs are hashed with bcrypt.
+2. **Auth Secret**: Uses `AUTH_SECRET` env var. Must be strong in production.
 3. **Cookie Settings**: HttpOnly, SameSite=Lax, Secure in production.
 4. **RBAC**: Backend validates all permissions server-side, never trusts client.

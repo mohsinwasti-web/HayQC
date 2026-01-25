@@ -22,7 +22,6 @@ export const queryKeys = {
   // Users
   users: (companyId?: string, role?: string) => ['users', { companyId, role }] as const,
   user: (id: string) => ['users', id] as const,
-  userByEmail: (email: string) => ['users', 'email', email] as const,
 
   // Purchase Orders
   purchaseOrders: (companyId?: string, status?: string) => ['purchaseOrders', { companyId, status }] as const,
@@ -113,7 +112,7 @@ export function useUsers(companyId?: string, role?: UserRole, options?: Omit<Use
 // ==================== AUTH HOOKS ====================
 interface LoginCredentials {
   companyId: string;
-  userId: string;
+  email: string;
   pin: string;
 }
 
@@ -132,8 +131,8 @@ interface LoginResponse {
 
 export function useLogin(options?: UseMutationOptions<LoginResponse, Error, LoginCredentials>) {
   return useMutation({
-    mutationFn: ({ companyId, userId, pin }: LoginCredentials) =>
-      api.auth.login(companyId, userId, pin) as Promise<LoginResponse>,
+    mutationFn: ({ companyId, email, pin }: LoginCredentials) =>
+      api.auth.login(companyId, email, pin) as Promise<LoginResponse>,
     ...options,
   });
 }
@@ -160,15 +159,6 @@ export function useUser(id: string, options?: Omit<UseQueryOptions<User>, 'query
     queryKey: queryKeys.user(id),
     queryFn: () => api.users.get(id) as Promise<User>,
     enabled: !!id,
-    ...options,
-  });
-}
-
-export function useUserByEmail(email: string, options?: Omit<UseQueryOptions<User>, 'queryKey' | 'queryFn'>) {
-  return useQuery({
-    queryKey: queryKeys.userByEmail(email),
-    queryFn: () => api.users.getByEmail(email) as Promise<User>,
-    enabled: !!email,
     ...options,
   });
 }

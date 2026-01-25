@@ -18,16 +18,16 @@ const verifyPin = async (pin: string, hash: string): Promise<boolean> => {
 
 const LoginSchema = z.object({
   companyId: z.string(),
-  userId: z.string(),
+  email: z.string().email(),
   pin: z.string().length(4),
 });
 
 authRouter.post("/login", zValidator("json", LoginSchema), async (c) => {
   try {
-    const { companyId, userId, pin } = c.req.valid("json");
+    const { companyId, email, pin } = c.req.valid("json");
 
     const user = await prisma.user.findFirst({
-      where: { id: userId, companyId, isActive: true },
+      where: { email, companyId, isActive: true },
       include: {
         company: true,
         poAssignments: { select: { poId: true } },
