@@ -16,10 +16,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const url = `${API_BASE_URL}${endpoint}`;
 
   // Build headers - auth is handled via HttpOnly cookies
+  // Only set Content-Type when there's a body to avoid triggering unnecessary CORS preflight
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const config: RequestInit = {
     ...options,

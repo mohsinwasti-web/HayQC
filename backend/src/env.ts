@@ -16,6 +16,9 @@ const envSchema = z.object({
   // Database - REQUIRED
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
+  // CORS (optional - comma-separated list of allowed origins)
+  CORS_ORIGIN: z.string().optional(),
+
   // Error Tracking (optional - only needed for production)
   SENTRY_DSN: z.string().url().optional(),
 });
