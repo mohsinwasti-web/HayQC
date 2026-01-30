@@ -19,7 +19,7 @@ const verifyPin = async (pin: string, hash: string): Promise<boolean> => {
 const LoginSchema = z.object({
   companyId: z.string(),
   email: z.string().email(),
-  pin: z.string().length(4),
+  pin: z.string().regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
 });
 
 authRouter.post("/login", zValidator("json", LoginSchema), async (c) => {
@@ -186,7 +186,7 @@ const RegisterSchema = z.object({
   admin: z.object({
     name: z.string().min(1, "Admin name is required"),
     email: z.string().email("Valid email is required"),
-    pin: z.string().length(4, "PIN must be exactly 4 digits"),
+    pin: z.string().regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
   }),
 });
 
@@ -196,6 +196,7 @@ authRouter.post(
   async (c) => {
     try {
       const { company, admin } = c.req.valid("json");
+      const adminEmail = admin.email.trim().toLowerCase();
 
       // Check for duplicate company code
       const existingCompany = await prisma.company.findUnique({
@@ -210,7 +211,7 @@ authRouter.post(
 
       // Check for duplicate email
       const existingUser = await prisma.user.findUnique({
-        where: { email: admin.email },
+        where: { email: adminEmail },
       });
       if (existingUser) {
         return c.json(
@@ -237,7 +238,7 @@ authRouter.post(
           data: {
             companyId: newCompany.id,
             name: admin.name,
-            email: admin.email,
+            email: adminEmail,
             pinHash,
             role: "SUPERVISOR",
             isActive: true,
@@ -258,7 +259,26 @@ authRouter.post(
       });
 
       return c.json({ data: result }, 201);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        const target = error.meta?.target;
+        if (Array.isArray(target) && target.includes("code")) {
+          return c.json(
+            { error: { message: "A company with this code already exists", code: "DUPLICATE_CODE" } },
+            409
+          );
+        }
+        if (Array.isArray(target) && target.includes("email")) {
+          return c.json(
+            { error: { message: "A user with this email already exists", code: "DUPLICATE_EMAIL" } },
+            409
+          );
+        }
+        return c.json(
+          { error: { message: "A record with this value already exists", code: "DUPLICATE" } },
+          409
+        );
+      }
       console.error("Registration error:", error);
       return c.json(
         { error: { message: "Registration failed", code: "REGISTER_ERROR" } },
