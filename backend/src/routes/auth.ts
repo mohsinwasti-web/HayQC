@@ -174,6 +174,100 @@ authRouter.get(
   }
 );
 
+// PUBLIC endpoint - Register a new company + admin user (atomic)
+const RegisterSchema = z.object({
+  company: z.object({
+    name: z.string().min(1, "Company name is required"),
+    code: z.string().min(2, "Company code must be at least 2 characters").max(5),
+    address: z.string().optional(),
+    contactEmail: z.string().email().optional(),
+    contactPhone: z.string().optional(),
+  }),
+  admin: z.object({
+    name: z.string().min(1, "Admin name is required"),
+    email: z.string().email("Valid email is required"),
+    pin: z.string().length(4, "PIN must be exactly 4 digits"),
+  }),
+});
+
+authRouter.post(
+  "/register",
+  zValidator("json", RegisterSchema),
+  async (c) => {
+    try {
+      const { company, admin } = c.req.valid("json");
+
+      // Check for duplicate company code
+      const existingCompany = await prisma.company.findUnique({
+        where: { code: company.code.toUpperCase() },
+      });
+      if (existingCompany) {
+        return c.json(
+          { error: { message: "A company with this code already exists", code: "DUPLICATE_CODE" } },
+          409
+        );
+      }
+
+      // Check for duplicate email
+      const existingUser = await prisma.user.findUnique({
+        where: { email: admin.email },
+      });
+      if (existingUser) {
+        return c.json(
+          { error: { message: "A user with this email already exists", code: "DUPLICATE_EMAIL" } },
+          409
+        );
+      }
+
+      const pinHash = await hashPin(admin.pin);
+
+      // Create company + admin user atomically
+      const result = await prisma.$transaction(async (tx) => {
+        const newCompany = await tx.company.create({
+          data: {
+            name: company.name,
+            code: company.code.toUpperCase(),
+            address: company.address || null,
+            contactEmail: company.contactEmail || null,
+            contactPhone: company.contactPhone || null,
+          },
+        });
+
+        const newUser = await tx.user.create({
+          data: {
+            companyId: newCompany.id,
+            name: admin.name,
+            email: admin.email,
+            pinHash,
+            role: "SUPERVISOR",
+            isActive: true,
+          },
+        });
+
+        return {
+          company: newCompany,
+          user: {
+            id: newUser.id,
+            companyId: newUser.companyId,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            isActive: newUser.isActive,
+          },
+        };
+      });
+
+      return c.json({ data: result }, 201);
+    } catch (error) {
+      console.error("Registration error:", error);
+      return c.json(
+        { error: { message: "Registration failed", code: "REGISTER_ERROR" } },
+        500
+      );
+    }
+  }
+);
+
 // Get current user from token
 authRouter.get("/me", async (c) => {
   const auth = c.get("auth");

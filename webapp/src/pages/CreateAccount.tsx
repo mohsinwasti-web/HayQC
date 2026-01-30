@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { useCreateCompany, useCreateUser } from '@/hooks/useApi';
+import { useRegister } from '@/hooks/useApi';
 import { BilingualLabel } from '@/components/qc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,7 @@ import { bilingualLabels } from '@/types/qc';
 
 export default function CreateAccount() {
   const navigate = useNavigate();
-  const createCompanyMutation = useCreateCompany();
-  const createUserMutation = useCreateUser();
+  const registerMutation = useRegister();
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -61,23 +60,19 @@ export default function CreateAccount() {
     setIsSubmitting(true);
 
     try {
-      // Create company
-      const company = await createCompanyMutation.mutateAsync({
-        name: formData.companyName.trim(),
-        code: formData.companyCode.trim().toUpperCase(),
-        address: formData.address.trim() || null,
-        contactEmail: formData.contactEmail.trim() || null,
-        contactPhone: formData.contactPhone.trim() || null,
-      });
-
-      // Create admin user (as SUPERVISOR)
-      await createUserMutation.mutateAsync({
-        companyId: company.id,
-        name: formData.adminName.trim(),
-        email: formData.adminEmail.trim(),
-        pin: formData.adminPin,
-        role: 'SUPERVISOR',
-        isActive: true,
+      await registerMutation.mutateAsync({
+        company: {
+          name: formData.companyName.trim(),
+          code: formData.companyCode.trim().toUpperCase(),
+          address: formData.address.trim() || undefined,
+          contactEmail: formData.contactEmail.trim() || undefined,
+          contactPhone: formData.contactPhone.trim() || undefined,
+        },
+        admin: {
+          name: formData.adminName.trim(),
+          email: formData.adminEmail.trim(),
+          pin: formData.adminPin,
+        },
       });
 
       // Navigate to login
@@ -255,7 +250,7 @@ export default function CreateAccount() {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t border-border safe-area-inset-bottom">
         <Button
           onClick={handleSubmit}
-          disabled={isSubmitting || createCompanyMutation.isPending || createUserMutation.isPending}
+          disabled={isSubmitting || registerMutation.isPending}
           size="lg"
           className="w-full h-14 text-lg font-semibold"
         >

@@ -145,6 +145,10 @@ export const api = {
       if (role) params.append('role', role);
       return api.get(`/api/auth/login-users?${params.toString()}`);
     },
+    register: (data: {
+      company: { name: string; code: string; address?: string; contactEmail?: string; contactPhone?: string };
+      admin: { name: string; email: string; pin: string };
+    }) => api.post('/api/auth/register', data),
   },
 
 

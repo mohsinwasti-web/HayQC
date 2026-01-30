@@ -109,6 +109,36 @@ export function useUsers(companyId?: string, role?: UserRole, options?: Omit<Use
   });
 }
 
+// ==================== REGISTRATION HOOKS ====================
+interface RegisterPayload {
+  company: { name: string; code: string; address?: string; contactEmail?: string; contactPhone?: string };
+  admin: { name: string; email: string; pin: string };
+}
+
+interface RegisterResponse {
+  company: Company;
+  user: {
+    id: string;
+    companyId: string;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+  };
+}
+
+export function useRegister(options?: UseMutationOptions<RegisterResponse, Error, RegisterPayload>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: RegisterPayload) =>
+      api.auth.register(data) as Promise<RegisterResponse>,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies });
+    },
+    ...options,
+  });
+}
+
 // ==================== AUTH HOOKS ====================
 interface LoginCredentials {
   companyId: string;
